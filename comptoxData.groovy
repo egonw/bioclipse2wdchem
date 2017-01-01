@@ -12,6 +12,15 @@ if (bioclipse.isOnline()) {
   )
 }
 
+def renewFile(file) {
+  if (ui.fileExists(file)) ui.remove(file)
+  ui.newFile(file)
+  return file
+}
+
+mappingsFile = "/CompToxDash/mappings.txt"
+renewFile(mappingsFile)
+
 // make a map
 map = new HashMap()
 for (i=1;i<=results.rowCount;i++) {
@@ -24,6 +33,6 @@ new File(bioclipse.fullPath("/CompToxDash/dsstox_20160701.tsv")).eachLine{ line 
   dsstox = fields[0]
   inchikey = fields[2]
   if (map.containsKey(inchikey)) {
-    ui.append("/CompToxDash/mappings.txt", map.get(inchikey) + "\tP3117\t\"${dsstox}\"\tS248\tQ28061352\n")  
+    ui.append(mappingsFile, map.get(inchikey) + "\tP3117\t\"${dsstox}\"\tS248\tQ28061352\n")  
   }
 }
