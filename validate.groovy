@@ -1,7 +1,7 @@
 sparql = """
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX wd: <http://www.wikidata.org/entity/>
-SELECT ?compound ?canonical ?isomeric WHERE {
+SELECT ?compound ?canonical ?isomeric ?mass ?inchi ?inchikey WHERE {
   ?compound wdt:P31 wd:Q11173.
   OPTIONAL { ?compound wdt:P233 ?canonical. }
   OPTIONAL { ?compound wdt:P2017 ?isomeric. }
@@ -28,6 +28,12 @@ badSMILESFile = "/Wikidata/badSMILES.txt"
 renewFile(badSMILESFile)
 smilesComboFile = "/Wikidata/wrongCombo.txt"
 renewFile(smilesComboFile)
+massFile = "/Wikidata/mass.txt"
+renewFile(massFile)
+inchiFile = "/Wikidata/inchi.txt"
+renewFile(inchiFile)
+inchiKeyFile = "/Wikidata/inchikey.txt"
+renewFile(inchiKeyFile)
 
 println "Found ${results.rowCount} results"
 
@@ -58,5 +64,35 @@ for (compound=1; compound<=results.rowCount; compound++) {
     if (canForm != isoForm) {
       ui.append(smilesComboFile, "Canonical and isomeric SMILESes have different chemical formulas for $itemID: $canForm or $isoForm\n")
     }
+  }
+  // check masses
+  massStr = results.get(compound, "mass")
+  if (massStr != null) {
+    mass = Double.valueOf(massStr)
+    if (molCan != null) {
+      cdkMass = cdk.calculateMass(molCan)
+      if (cdkMass > 0.1 && (Math.abs((cdkMass - mass)) > 1.5)) {
+        ui.append(massFile, "Unexpected mass for $itemID: $cdkMass but got $mass\n")
+      }
+    } else if (molIso != null) {
+      cdkMass = cdk.calculateMass(molIso)
+      if (cdkMass > 0.1 && (Math.abs((cdkMass - mass)) > 1.5)) {
+        ui.append(massFile, "Unexpected mass for $itemID: $cdkMass but got $mass\n")
+      }
+    }
+  }
+  // check InChI / -Key
+  inchiStr = results.get(compound, "inchi")
+  inchiKeyStr = results.get(compound, "inchikey")
+  if (molIso != null) {
+    // chirality expected, compare full key
+    inchiObj = inchi.generate(molIso)
+    if (inchiStr != null && !inchiStr.equals(inchiObj.value.substring(6))) {
+      ui.append(inchiFile, "Unexpected InChI for $itemID:\n  wikidata: $inchiStr\n  computed: " + inchiObj.value.substring(6) + "\n")
+    }
+    if (inchiKeyStr != null && !inchiKeyStr.equals(inchiObj.key)) {
+      ui.append(inchiKeyFile, "Unexpected InChIKey for $itemID: \n  wikidata: $inchiKeyStr\n  computed: " + inchiObj.key + "\n")
+    }
+  } else if (molCan != null) {
   }
 }
