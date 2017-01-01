@@ -10,3 +10,6 @@ is given for the paper, then it is added to the new item too.
 ## validate consistency of SMILES, mass, and InChI
 The validate.groovy script runs over all chemical compounds and validates if various structure informal bits are consistent.
 
+## add links to the EPA CompTox Dashboard
+The comptoxData.groovy script takes the data dump on Figshare with InChIKey to DSSTOX substance identifiers. Using exact
+InChIKey matches, it creates QS statements to add the mapping.
